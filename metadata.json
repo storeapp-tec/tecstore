@@ -1,0 +1,6 @@
+{
+  "name": "Store POS & Inventarios",
+  "description": "Punto de venta y auditoría de inventario físico con conciliación para tienda universitaria",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

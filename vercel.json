@@ -1,0 +1,24 @@
+{
+  "rewrites": [
+    {
+      "source": "/tienda/sw.js",
+      "destination": "/sw.js"
+    },
+    {
+      "source": "/tienda/manifest.json",
+      "destination": "/manifest.json"
+    },
+    {
+      "source": "/tienda/:path*",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/tienda",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}
