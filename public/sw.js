@@ -1,11 +1,10 @@
-const CACHE_NAME = 'store-pos-v1';
+const CACHE_NAME = 'store-pos-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/icon-192.png',
-  '/icon-512.png',
-  '/icon.svg'
+  '/icon-512.png'
 ];
 
 // Install: pre-cache static assets
