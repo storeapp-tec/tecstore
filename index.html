@@ -431,13 +431,22 @@
     .modal-buttons { display: flex; gap: 6px; margin-top: 12px; }
     .modal-buttons button { flex: 1; }
     
-    .payment-options { display: flex; flex-direction: column; gap: 5px; margin: 10px 0; }
+    .vender-actions-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .vender-actions-grid .btn { width: 100%; font-weight: 600; font-size: 0.76rem; padding: 8px 6px; }
+    .payment-options { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 10px 0; }
     .payment-btn { 
-      width: 100%; padding: 10px; border: 2px solid var(--border);
-      border-radius: 10px; background: var(--surface); font-weight: 500;
-      font-size: 0.75rem; cursor: pointer; text-align: center; 
+      width: 100%; padding: 10px 6px; border: 2px solid var(--border);
+      border-radius: 10px; background: var(--surface); font-weight: 600;
+      font-size: 0.74rem; cursor: pointer; text-align: center; transition: all 0.15s;
     }
-    .payment-btn.selected { border-color: var(--accent); background: #E8F8F5; color: var(--accent); font-weight: 600; }
+    .payment-btn.selected { border-color: var(--accent); background: #E8F8F5; color: var(--accent); font-weight: 700; }
+    .payment-btn.discount-active { border-color: var(--warning); background: #FFFBEB; color: #B45309; }
+    .nomina-desc-box { background: #F0FDF4; border: 1.5px solid #BBF7D0; border-radius: 10px; padding: 8px; margin-bottom: 8px; text-align: left; }
+    .nomina-desc-title { font-size: 0.72rem; font-weight: 700; color: var(--primary); margin-bottom: 6px; }
+    .nomina-desc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+    .nomina-opt-btn { padding: 7px 6px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--surface); font-size: 0.74rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; color: var(--text); }
+    .nomina-opt-btn.selected { background: var(--accent); border-color: var(--accent); color: #FFFFFF; }
+    .pago-resumen-box { background: var(--bg); border-radius: 10px; padding: 8px 10px; font-size: 0.75rem; color: var(--text-secondary); line-height: 1.45; }
     
     .welcome-box { text-align: center; padding: 40px 20px; }
     .welcome-box h2 { font-size: 1.3rem; margin-bottom: 6px; color: var(--primary); }
@@ -586,12 +595,15 @@
           <button class="btn btn-primary btn-icon" onclick="abrirEscaner('vender')" title="Escanear con cámara">📷</button>
         </div>
 
-        <!-- BOTÓN ACCESO A MODAL RÁPIDO (CON BADGE DINÁMICO DE TOTAL EN TICKET) -->
-        <button class="btn btn-outline" style="width:100%; border-color:var(--accent); color:var(--accent); font-weight:600; font-size:0.78rem; padding:7px 10px; display:flex; align-items:center; justify-content:center; gap:6px; background:#F0FDF4;" onclick="abrirModalRapidos()">
-          <span>⚡</span>
-          <span>Artículos Rápidos (9)</span>
-          <span style="font-size:0.68rem; color:var(--text-secondary); margin-left:auto;">Abrir panel ▾</span>
-        </button>
+        <!-- ACCIONES RÁPIDAS 2 POR LÍNEA -->
+        <div class="vender-actions-grid">
+          <button class="btn btn-outline" style="border-color:var(--accent); color:var(--accent); background:#F0FDF4;" onclick="abrirModalRapidos()">
+            ⚡ Rápidos (9)
+          </button>
+          <button class="btn btn-outline" id="btn-descuento-vender" style="border-color:var(--primary); color:var(--primary); background:#EDF5F8;" onclick="abrirModalDescuento(false)">
+            🏷️ Descuento
+          </button>
+        </div>
       </div>
       
       <div class="totals-bar">
@@ -688,16 +700,57 @@
     <div class="modal-icon">💳</div>
     <div class="modal-title">Tipo de pago</div>
     <div class="payment-options" id="payment-options">
-      <div class="payment-btn selected" onclick="seleccionarPago(this,'Tarjeta Crédito')">💳 Crédito</div>
-      <div class="payment-btn" onclick="seleccionarPago(this,'Tarjeta Débito')">💳 Débito</div>
-      <div class="payment-btn" onclick="seleccionarPago(this,'Efectivo')">💵 Efectivo</div>
-      <div class="payment-btn" onclick="seleccionarPago(this,'CECO')">🏷️ CECO</div>
-      <div class="payment-btn" onclick="seleccionarPago(this,'Nomina')">💼 Nómina (-10%)</div>
+      <div class="payment-btn selected" data-tipo="Tarjeta Crédito" onclick="seleccionarPago(this,'Tarjeta Crédito')">💳 Crédito</div>
+      <div class="payment-btn" data-tipo="Tarjeta Débito" onclick="seleccionarPago(this,'Tarjeta Débito')">💳 Débito</div>
+      <div class="payment-btn" data-tipo="Efectivo" onclick="seleccionarPago(this,'Efectivo')">💵 Efectivo</div>
+      <div class="payment-btn" data-tipo="CECO" onclick="seleccionarPago(this,'CECO')">🏷️ CECO</div>
+      <div class="payment-btn" data-tipo="Nomina" onclick="seleccionarPago(this,'Nomina')">💼 Nómina</div>
+      <div class="payment-btn" id="btn-pago-descuento" onclick="abrirModalDescuento(true)">🏷️ Descuento</div>
     </div>
+    <div class="nomina-desc-box" id="nomina-descuento-panel" style="display:none;">
+      <div class="nomina-desc-title">Descuento de Nómina:</div>
+      <div class="nomina-desc-grid">
+        <button type="button" class="nomina-opt-btn selected" id="btn-nomina-10" onclick="seleccionarDescuentoNomina(10)">✓ 10%</button>
+        <button type="button" class="nomina-opt-btn" id="btn-nomina-0" onclick="seleccionarDescuentoNomina(0)">Ninguno</button>
+      </div>
+    </div>
+    <div class="pago-resumen-box" id="pago-resumen-preview"></div>
     <div class="modal-buttons">
       <button class="btn btn-outline" onclick="cerrarModalPago()">Cancelar</button>
       <button class="btn btn-primary" onclick="siguientePaso()">Siguiente →</button>
     </div>
+  </div>
+</div>
+
+<!-- MODAL DE DESCUENTO MANUAL -->
+<div class="modal-overlay" id="modal-descuento" style="z-index:10002;">
+  <div class="modal-box">
+    <div class="modal-icon">🏷️</div>
+    <div class="modal-title">Aplicar Descuento</div>
+    <div class="modal-subtitle" style="margin-bottom:8px;">
+      Total actual: <strong id="mdesc-subtotal" style="color:var(--primary);">$0.00</strong>
+    </div>
+    <div style="text-align:left; margin-bottom:10px;">
+      <label for="input-descuento-manual" style="font-size:0.74rem; font-weight:600; color:var(--text-secondary); display:block; margin-bottom:4px;">
+        Porcentaje de descuento (%):
+      </label>
+      <input type="number" id="input-descuento-manual" placeholder="0" min="0" max="100" step="1" oninput="actualizarPreviewModalDescuento()" style="width:100%; font-size:1.15rem; font-weight:700; text-align:center;">
+    </div>
+    <div class="dif-preview-box" style="margin-bottom:10px; background:#EDF5F8; flex-direction:column; gap:4px; align-items:stretch;">
+      <div style="display:flex; justify-content:space-between; font-size:0.76rem; color:#B45309; font-weight:600;">
+        <span>Descuento (<span id="mdesc-pct-label">0</span>%):</span>
+        <span id="mdesc-monto-desc">-$0.00</span>
+      </div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span>Total a pagar:</span>
+        <strong id="mdesc-total-final" style="color:var(--accent); font-size:1.05rem;">$0.00</strong>
+      </div>
+    </div>
+    <div class="modal-buttons">
+      <button type="button" class="btn btn-outline" onclick="quitarDescuentoManual()">Quitar</button>
+      <button type="button" class="btn btn-primary" onclick="aplicarDescuentoManual()">✓ Finalizar</button>
+    </div>
+    <button type="button" class="btn btn-outline" style="width:100%; margin-top:6px; border:none; color:var(--text-secondary);" onclick="cerrarModalDescuento()">Cancelar</button>
   </div>
 </div>
 
@@ -1073,6 +1126,9 @@ let scanner = null;
 let codigoEdicion = '';
 let usuarioActual = '';
 let tipoPagoSeleccionado = 'Tarjeta Crédito';
+let descuentoManual = 0;
+let descuentoNominaPct = 10;
+let descuentoDesdePago = false;
 let modoDevolucion = false;
 
 // ESTADO DEL MODO CONTEO / AUDITORÍA
@@ -2344,15 +2400,44 @@ function eliminarItem(id) {
   renderizarCarrito(); 
 }
 
+function calcularResumenCobro() {
+  let subtotalVenta = carrito
+    .filter(x => !x.devolucion)
+    .reduce((sum, item) => sum + (Number(item.precio) * Number(item.cantidad)), 0);
+  let subtotalDev = carrito
+    .filter(x => x.devolucion)
+    .reduce((sum, item) => sum + (Number(item.precio) * Number(item.cantidad)), 0);
+
+  let descNomina = (tipoPagoSeleccionado === 'Nomina' && descuentoNominaPct === 10)
+    ? subtotalVenta * 0.10
+    : 0;
+  let restanteTrasNomina = Math.max(0, subtotalVenta - descNomina);
+  let pctManual = Math.min(Math.max(0, Number(descuentoManual) || 0), 100);
+  let descManualAplicado = restanteTrasNomina * (pctManual / 100);
+  let totalVentaFinal = Math.max(0, restanteTrasNomina - descManualAplicado);
+
+  return {
+    subtotalVenta,
+    subtotalDev,
+    descNomina,
+    pctManual,
+    descManualAplicado,
+    descTotal: descNomina + descManualAplicado,
+    totalVentaFinal
+  };
+}
+
 function renderizarCarrito() {
   actualizarBadgesModalRapidos();
   let c = document.getElementById('lista-carrito'), ta = 0, tm = 0;
   if(!carrito.length){ 
+    descuentoManual = 0;
     c.innerHTML = '<div class="empty-state">🛒 Vacío</div>'; 
     document.getElementById('total-articulos').textContent = '📦 0 artículos'; 
     document.getElementById('total-monto').textContent = '$0'; 
     document.getElementById('tipo-pago-display').textContent = ''; 
-    document.getElementById('descuento-display').style.display = 'none'; 
+    document.getElementById('descuento-display').style.display = 'none';
+    actualizarBotonesDescuentoUI();
     return; 
   }
   
@@ -2380,34 +2465,166 @@ function renderizarCarrito() {
   c.innerHTML = html;
   
   document.getElementById('total-articulos').textContent = `📦 ${ta} artículos`;
-  document.getElementById('total-monto').textContent = `$${Math.abs(tm).toFixed(2)}`;
   actualizarTotales();
 }
 
+function actualizarBotonesDescuentoUI() {
+  let btnVender = document.getElementById('btn-descuento-vender');
+  let btnPago = document.getElementById('btn-pago-descuento');
+  let pctTxt = descuentoManual > 0 ? Number(Number(descuentoManual).toFixed(2)) : 0;
+  if (btnVender) {
+    if (pctTxt > 0) {
+      btnVender.textContent = `🏷️ Desc. -${pctTxt}%`;
+      btnVender.style.borderColor = 'var(--warning)';
+      btnVender.style.color = '#B45309';
+      btnVender.style.background = '#FFFBEB';
+    } else {
+      btnVender.textContent = '🏷️ Descuento';
+      btnVender.style.borderColor = 'var(--primary)';
+      btnVender.style.color = 'var(--primary)';
+      btnVender.style.background = '#EDF5F8';
+    }
+  }
+  if (btnPago) {
+    if (pctTxt > 0) {
+      btnPago.textContent = `🏷️ Desc. -${pctTxt}%`;
+      btnPago.classList.add('discount-active');
+    } else {
+      btnPago.textContent = '🏷️ Descuento';
+      btnPago.classList.remove('discount-active');
+    }
+  }
+}
+
 function seleccionarPago(el, tipo) {
-  document.querySelectorAll('#payment-options .payment-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#payment-options .payment-btn[data-tipo]').forEach(b => b.classList.remove('selected'));
   el.classList.add('selected');
   tipoPagoSeleccionado = tipo;
+  let panelNomina = document.getElementById('nomina-descuento-panel');
+  if (panelNomina) {
+    panelNomina.style.display = (tipo === 'Nomina') ? 'block' : 'none';
+  }
+  actualizarResumenModalPago();
+  actualizarTotales();
+}
+
+function seleccionarDescuentoNomina(pct) {
+  descuentoNominaPct = pct;
+  document.getElementById('btn-nomina-10').classList.toggle('selected', pct === 10);
+  document.getElementById('btn-nomina-0').classList.toggle('selected', pct === 0);
+  actualizarResumenModalPago();
+  actualizarTotales();
+}
+
+function actualizarResumenModalPago() {
+  let box = document.getElementById('pago-resumen-preview');
+  if (!box) return;
+  let res = calcularResumenCobro();
+  let partes = [`Subtotal: <strong>$${res.subtotalVenta.toFixed(2)}</strong>`];
+  if (res.descNomina > 0) partes.push(`Nómina (-10%): <strong style="color:var(--accent);">-$${res.descNomina.toFixed(2)}</strong>`);
+  if (res.descManualAplicado > 0) partes.push(`Desc. manual (-${res.pctManual}%): <strong style="color:#B45309;">-$${res.descManualAplicado.toFixed(2)}</strong>`);
+  partes.push(`Total a pagar: <strong style="color:var(--primary); font-size:0.9rem;">$${res.totalVentaFinal.toFixed(2)}</strong>`);
+  box.innerHTML = partes.join('<br>');
 }
 
 function actualizarTotales() {
-  let total = parseFloat(document.getElementById('total-monto').textContent.replace('$','')) || 0;
+  let res = calcularResumenCobro();
+  let totalBruto = res.subtotalVenta + res.subtotalDev;
+  let totalMostrar = res.subtotalVenta > 0 ? (res.totalVentaFinal + res.subtotalDev) : res.subtotalDev;
+
+  document.getElementById('total-monto').textContent = `$${Math.abs(totalMostrar).toFixed(2)}`;
   let display = document.getElementById('tipo-pago-display');
   let descDisplay = document.getElementById('descuento-display');
-  if (total > 0) {
+
+  if (totalBruto > 0) {
     display.textContent = '💳 ' + tipoPagoSeleccionado;
-    if (tipoPagoSeleccionado === 'Nomina') { 
-      descDisplay.style.display = 'block'; 
-      descDisplay.textContent = 'Nómina (-10%): $' + (total * 0.9).toFixed(2); 
-    } else { 
-      descDisplay.style.display = 'none'; 
+    if (res.descTotal > 0) {
+      let detalles = [];
+      if (res.descNomina > 0) detalles.push(`Nómina -10% (-$${res.descNomina.toFixed(2)})`);
+      if (res.descManualAplicado > 0) detalles.push(`Desc. -${res.pctManual}% (-$${res.descManualAplicado.toFixed(2)})`);
+      descDisplay.style.display = 'block';
+      descDisplay.textContent = `Subtotal $${res.subtotalVenta.toFixed(2)} · ${detalles.join(' + ')}`;
+    } else {
+      descDisplay.style.display = 'none';
     }
+  } else {
+    display.textContent = '';
+    descDisplay.style.display = 'none';
   }
+  actualizarBotonesDescuentoUI();
+}
+
+function abrirModalDescuento(desdePago) {
+  let res = calcularResumenCobro();
+  if (res.subtotalVenta <= 0) {
+    return mostrarToast('Agrega artículos de venta primero');
+  }
+  descuentoDesdePago = !!desdePago;
+  let baseDisponible = Math.max(0, res.subtotalVenta - res.descNomina);
+  document.getElementById('mdesc-subtotal').textContent = `$${baseDisponible.toFixed(2)}`;
+  let inp = document.getElementById('input-descuento-manual');
+  inp.value = descuentoManual > 0 ? descuentoManual : '';
+  actualizarPreviewModalDescuento();
+  document.getElementById('modal-descuento').style.display = 'flex';
+  setTimeout(() => { inp.focus(); inp.select(); }, 120);
+}
+
+function cerrarModalDescuento() {
+  document.getElementById('modal-descuento').style.display = 'none';
+}
+
+function actualizarPreviewModalDescuento() {
+  let res = calcularResumenCobro();
+  let baseDisponible = Math.max(0, res.subtotalVenta - res.descNomina);
+  let pct = parseFloat(document.getElementById('input-descuento-manual').value);
+  if (isNaN(pct) || pct < 0) pct = 0;
+  if (pct > 100) pct = 100;
+  let aplicado = baseDisponible * (pct / 100);
+  let totalFinal = Math.max(0, baseDisponible - aplicado);
+  document.getElementById('mdesc-pct-label').textContent = Number(pct.toFixed(2));
+  document.getElementById('mdesc-monto-desc').textContent = `-$${aplicado.toFixed(2)}`;
+  document.getElementById('mdesc-total-final').textContent = `$${totalFinal.toFixed(2)}`;
+}
+
+function aplicarDescuentoManual() {
+  let pct = parseFloat(document.getElementById('input-descuento-manual').value);
+  if (isNaN(pct) || pct < 0) pct = 0;
+  if (pct > 100) {
+    pct = 100;
+    mostrarToast('⚠️ El descuento máximo es 100%');
+  }
+  descuentoManual = Number(pct.toFixed(2));
+  cerrarModalDescuento();
+  actualizarTotales();
+  if (descuentoDesdePago) {
+    actualizarResumenModalPago();
+  }
+  if (descuentoManual > 0) {
+    mostrarToast(`🏷️ Descuento aplicado: -${descuentoManual}%`);
+  }
+}
+
+function quitarDescuentoManual() {
+  descuentoManual = 0;
+  cerrarModalDescuento();
+  actualizarTotales();
+  if (descuentoDesdePago) {
+    actualizarResumenModalPago();
+  }
+  mostrarToast('Descuento eliminado');
 }
 
 function cobrar() {
   if(!carrito.length) return mostrarToast('Vacío');
   if(!requiereUsuario()) return;
+  let panelNomina = document.getElementById('nomina-descuento-panel');
+  if (panelNomina) {
+    panelNomina.style.display = (tipoPagoSeleccionado === 'Nomina') ? 'block' : 'none';
+  }
+  document.getElementById('btn-nomina-10').classList.toggle('selected', descuentoNominaPct === 10);
+  document.getElementById('btn-nomina-0').classList.toggle('selected', descuentoNominaPct === 0);
+  actualizarBotonesDescuentoUI();
+  actualizarResumenModalPago();
   document.getElementById('modal-pago').style.display = 'flex';
 }
 
@@ -2417,10 +2634,11 @@ function cerrarModalPago() {
 
 function siguientePaso() {
   cerrarModalPago();
-  let total = parseFloat(document.getElementById('total-monto').textContent.replace('$','')) || 0;
-  let descuento = tipoPagoSeleccionado === 'Nomina' ? total * 0.9 : total;
-  let resumen = `Total: $${total.toFixed(2)}<br>Tipo: ${tipoPagoSeleccionado}`;
-  if (tipoPagoSeleccionado === 'Nomina') resumen += `<br><span style="color:var(--accent);font-weight:600;">Nómina (-10%): $${descuento.toFixed(2)}</span>`;
+  let res = calcularResumenCobro();
+  let resumen = `Subtotal: $${res.subtotalVenta.toFixed(2)}<br>Tipo: ${tipoPagoSeleccionado}`;
+  if (res.descNomina > 0) resumen += `<br><span style="color:var(--accent);font-weight:600;">Nómina (-10%): -$${res.descNomina.toFixed(2)}</span>`;
+  if (res.descManualAplicado > 0) resumen += `<br><span style="color:#B45309;font-weight:600;">Descuento manual (-${res.pctManual}%): -$${res.descManualAplicado.toFixed(2)}</span>`;
+  resumen += `<br><strong style="color:var(--primary); font-size:0.95rem;">Total a pagar: $${res.totalVentaFinal.toFixed(2)}</strong>`;
   document.getElementById('modal-titulo-confirm').textContent = 'Confirmar cobro';
   document.getElementById('modal-resumen').innerHTML = resumen;
   resetearBotonesModalConfirm('💳 Confirmar cobro');
@@ -2464,15 +2682,17 @@ function ejecutarCobro() {
   }
   if (btnCancel) btnCancel.disabled = true;
 
+  let res = calcularResumenCobro();
+  let factor = res.subtotalVenta > 0 ? (res.totalVentaFinal / res.subtotalVenta) : 1;
+
   let carritoCobro = carrito.filter(x => !x.devolucion).map(item => {
-    let precio = tipoPagoSeleccionado === 'Nomina' ? Number(item.precio) * 0.9 : Number(item.precio);
+    let precio = Number((Number(item.precio) * factor).toFixed(2));
     return {...item, precio};
   });
   
   let devoluciones = carrito.filter(x => x.devolucion);
   let totalPiezas = carrito.reduce((sum, item) => sum + Number(item.cantidad), 0);
-  let totalFinal = carritoCobro.reduce((sum, item) => sum + (Number(item.precio) * Number(item.cantidad)), 0)
-    + devoluciones.reduce((sum, item) => sum + (Number(item.precio) * Number(item.cantidad)), 0);
+  let totalFinal = res.totalVentaFinal + res.subtotalDev;
   let esSoloDevolucion = carritoCobro.length === 0 && devoluciones.length > 0;
   let pagoUsado = tipoPagoSeleccionado;
   
@@ -2505,7 +2725,9 @@ function ejecutarCobro() {
 }
 
 function finalizarFlujoCobro() {
-  carrito = []; 
+  carrito = [];
+  descuentoManual = 0;
+  descuentoNominaPct = 10;
   renderizarCarrito(); 
   cargarProductos();
   tipoPagoSeleccionado = 'Tarjeta Crédito';
@@ -2514,9 +2736,11 @@ function finalizarFlujoCobro() {
   document.getElementById('devolucion-options').style.display = 'none';
   document.getElementById('btn-accion-principal').textContent = '💳 Cobrar';
   document.getElementById('btn-accion-principal').onclick = cobrar;
-  document.querySelectorAll('#payment-options .payment-btn').forEach(b => b.classList.remove('selected'));
-  let firstBtn = document.querySelector('#payment-options .payment-btn');
+  document.querySelectorAll('#payment-options .payment-btn[data-tipo]').forEach(b => b.classList.remove('selected'));
+  let firstBtn = document.querySelector('#payment-options .payment-btn[data-tipo]');
   if (firstBtn) firstBtn.classList.add('selected');
+  let panelNomina = document.getElementById('nomina-descuento-panel');
+  if (panelNomina) panelNomina.style.display = 'none';
   actualizarTotales();
 }
 
